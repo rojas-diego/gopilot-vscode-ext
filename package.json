@@ -14,16 +14,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "gopilot-vscode-ext.autoComplete",
-        "title": "Gopilot: Auto Complete Code"
-      }
-    ],
-    "keybindings": [
+        "command": "gopilot-vscode-ext.activateExtension",
+        "title": "Gopilot: Activate"
+      },
       {
-        "command": "gopilot.autoComplete",
-        "key": "ctrl+alt+m",
-        "mac": "cmd+alt+m",
-        "when": "editorTextFocus"
+        "command": "gopilot-vscode-ext.deactivateExtension",
+        "title": "Gopilot: Deactivate"
       }
     ]
   },
