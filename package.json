@@ -23,7 +23,7 @@
       },
       {
         "command": "gopilot-vscode-ext.updateApiUrl",
-        "title": "Update API URL"
+        "title": "Gopilot: Update API URL"
       }
     ],
     "configuration": {

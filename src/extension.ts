@@ -3,7 +3,6 @@ import axios from 'axios';
 
 export function activate(context: vscode.ExtensionContext) {
 	const config = vscode.workspace.getConfiguration('gopilot-vscode-ext');
-	let timeout: NodeJS.Timeout | undefined;
 	let activated = false;
 	let apiUrl = config.get('apiUrl', '');
 
@@ -60,7 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
 		
 			return new Promise(resolve => {
 				// Set a delay of 1000ms before making a suggestion.
-				timeout = setTimeout(async () => {
+				setTimeout(async () => {
 					// Fetching the code completion based on the text in the user's document  
 					let tokens: string[] | undefined;
 
@@ -74,12 +73,12 @@ export function activate(context: vscode.ExtensionContext) {
 						const document = editor.document;
 						const content = document.getText();
 						const cursorOffset = document.offsetAt(editor.selection.start);
-				
+
 						const response = await axios.post(`${apiUrl}/complete`, {
 							content,
 							cursorOffset,
 						});
-		
+
 						tokens = [response.data.tokens];
 
 						// If there's no response, return no items  
