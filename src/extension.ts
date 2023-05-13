@@ -1,26 +1,73 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import axios from 'axios';
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	let coloredTextDecoration: vscode.TextEditorDecorationType | undefined;
+	let tokens: string | undefined;
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "gopilot-vscode-ext" is now active!');
+    const removeSuggestion = (editor: vscode.TextEditor) => {
+        if (coloredTextDecoration) {
+            editor.setDecorations(coloredTextDecoration, []);
+            coloredTextDecoration.dispose();
+            coloredTextDecoration = undefined;
+        }
+    };
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('gopilot-vscode-ext.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Gopilot!');
-	});
+	let autoCompleteCommand = vscode.commands.registerCommand('gopilot-vscode-ext.autoComplete', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
 
-	context.subscriptions.push(disposable);
+        const document = editor.document;
+        const content = document.getText();
+        const cursorOffset = document.offsetAt(editor.selection.start);
+
+        try {
+			const response = await axios.post('http://localhost:3000/complete', {
+				content,
+				cursorOffset,
+			});
+			
+			tokens = response.data.tokens;
+
+			vscode.window.showInformationMessage(`Tokens: ${tokens}`);
+			
+			// Define a decoration with colored text and custom content
+			coloredTextDecoration = vscode.window.createTextEditorDecorationType({
+				color: 'rgba(200, 100, 100, 1)',
+				rangeBehavior: vscode.DecorationRangeBehavior.ClosedClosed,
+				after: {
+					contentText: tokens,
+					color: 'rgba(0, 0, 0, 0.5)',
+					fontStyle: 'italic',
+				},
+			});
+
+			// Apply the decoration at the cursor position
+			const cursorPosition = editor.selection.start;
+			const startPosition = cursorPosition.translate(0, 0);
+			const endPosition = cursorPosition.translate(0, 0); // Arbitrary length for the decoration
+			const decorationRange = new vscode.Range(startPosition, endPosition);
+			editor.setDecorations(coloredTextDecoration, [{ range: decorationRange }]);
+
+			context.subscriptions.push(onDidChangeTextEditorSelection);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error: ${error}`);
+        }
+    });
+
+	const onDidChangeTextEditorSelection = vscode.window.onDidChangeTextEditorSelection(async (e) => {
+        const editor = e.textEditor;
+
+        if (coloredTextDecoration) {
+            removeSuggestion(editor);
+        }
+    });
+
+    context.subscriptions.push(autoCompleteCommand);
+    context.subscriptions.push(onDidChangeTextEditorSelection);
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {}
