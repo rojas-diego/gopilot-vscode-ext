@@ -20,8 +20,22 @@
       {
         "command": "gopilot-vscode-ext.deactivateExtension",
         "title": "Gopilot: Deactivate"
+      },
+      {
+        "command": "gopilot-vscode-ext.updateApiUrl",
+        "title": "Update API URL"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "GoPilot",
+      "properties": {
+        "gopilot-vscode-ext.apiUrl": {
+          "type": "string",
+          "default": "",
+          "description": "API URL for GoPilot completion service"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

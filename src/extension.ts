@@ -2,8 +2,18 @@ import * as vscode from 'vscode';
 import axios from 'axios';
 
 export function activate(context: vscode.ExtensionContext) {
+	const config = vscode.workspace.getConfiguration('gopilot-vscode-ext');
 	let timeout: NodeJS.Timeout | undefined;
 	let activated = false;
+	let apiUrl = config.get('apiUrl', '');
+
+    if (!apiUrl) {
+        vscode.window.showInformationMessage('Please configure the API URL for GoPilot completion service', 'Configure').then((action) => {
+            if (action === 'Configure') {
+                vscode.commands.executeCommand('workbench.action.openSettings', 'gopilot-vscode-ext.apiUrl');
+            }
+        });
+    }
 
 	const activateExtensionCommand = vscode.commands.registerCommand('gopilot-vscode-ext.activateExtension', () => {
 		vscode.window.showInformationMessage('Extension activated!');
@@ -15,9 +25,28 @@ export function activate(context: vscode.ExtensionContext) {
 		activated = false;
 	});
 
+	const updateApiUrlCommand = vscode.commands.registerCommand('gopilot-vscode-ext.updateApiUrl', async () => {
+        const newApiUrl = await vscode.window.showInputBox({
+            prompt: 'Enter the API URL for GoPilot completion service',
+            value: apiUrl || '',
+        });
+
+        if (newApiUrl !== undefined) {
+            apiUrl = newApiUrl;
+            await config.update('apiUrl', apiUrl, vscode.ConfigurationTarget.Global);
+            vscode.window.showInformationMessage('API URL has been updated.');
+        }
+    });
+
+	const onDidChangeConfiguration = vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration('gopilot-vscode-ext.apiUrl')) {
+            apiUrl = config.get('apiUrl', '');
+        }
+    });
+
 	const provider: vscode.InlineCompletionItemProvider = {  
 		provideInlineCompletionItems: async (document, position, context, token) => {  
-			if (!activated) {
+			if (!activated || !apiUrl) {
 				return;
 			}
 
@@ -46,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
 						const content = document.getText();
 						const cursorOffset = document.offsetAt(editor.selection.start);
 				
-						const response = await axios.post('http://localhost:3000/complete', {
+						const response = await axios.post(`${apiUrl}/complete`, {
 							content,
 							cursorOffset,
 						});
@@ -78,7 +107,15 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	};  
 
-	// Registering the provider for all files  
+	// Registering the commands
+	context.subscriptions.push(activateExtensionCommand);
+	context.subscriptions.push(deactivateExtensionCommand);
+	context.subscriptions.push(updateApiUrlCommand);
+
+	// Registering the event listener
+	context.subscriptions.push(onDidChangeConfiguration);
+
+	// Registering the provider for all files
 	vscode.languages.registerInlineCompletionItemProvider({ pattern: "**" }, provider);
 }
 
