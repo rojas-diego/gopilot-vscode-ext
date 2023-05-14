@@ -5,6 +5,7 @@ export function activate(context: vscode.ExtensionContext) {
 	const config = vscode.workspace.getConfiguration('gopilot-vscode-ext');
 	let activated = false;
 	let apiUrl = config.get('apiUrl', '');
+	let debounceTimer: NodeJS.Timeout | null = null;
 
     if (!apiUrl) {
         vscode.window.showInformationMessage('Please configure the API URL for GoPilot completion service', 'Configure').then((action) => {
@@ -58,12 +59,15 @@ export function activate(context: vscode.ExtensionContext) {
 			}  
 		
 			return new Promise(resolve => {
-				// Set a delay of 1000ms before making a suggestion.
-				setTimeout(async () => {
+				if (debounceTimer) {
+                    clearTimeout(debounceTimer);
+                }
+
+				debounceTimer = setTimeout(async () => {
 					// Fetching the code completion based on the text in the user's document  
 					let tokens: string[] | undefined;
 
-					try {  
+					try {
 						const editor = vscode.window.activeTextEditor;
 						if (!editor) {
 							vscode.window.showErrorMessage('No active editor found.');
