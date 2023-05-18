@@ -75,11 +75,11 @@ export function activate(context: vscode.ExtensionContext) {
 						}
 				
 						const document = editor.document;
-						const content = document.getText();
+						const fileContents = document.getText();
 						const cursorOffset = document.offsetAt(editor.selection.start);
 
 						const response = await axios.post(`${apiUrl}/complete`, {
-							content,
+							fileContents,
 							cursorOffset,
 						});
 
