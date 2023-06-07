@@ -85,6 +85,20 @@ export function activate(context: vscode.ExtensionContext) {
 
 						tokens = [response.data.tokens];
 
+						tokens = tokens.map((sequence) => {
+							// Cut the sequence after the first occurence of
+							// `\n}`
+							var endOfSequence = sequence.indexOf('\n}');
+							if (endOfSequence !== -1) {
+								return sequence.slice(0, endOfSequence+2);
+							}
+							var endOfSequence = sequence.indexOf('}');
+							if (endOfSequence !== -1) {
+								return sequence.slice(0, endOfSequence+1);
+							}
+							return sequence;
+						});
+
 						// If there's no response, return no items  
 						if (tokens === null || tokens === undefined) {  
 							resolve({ items: [] });  
